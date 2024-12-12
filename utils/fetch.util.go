@@ -9,7 +9,7 @@ import (
 )
 
 // POST utiliti; return response body and error
-func Post(rpcUrl string, request interface{}) (interface{}, error) {
+func Post(rpcUrl string, request interface{}) ([]byte, error) {
 	requestBody, marshalErr := json.Marshal(request)
 
 	if marshalErr != nil {
