@@ -1,9 +1,10 @@
-package blockchain
+package web3
 
 import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 
 	"org.donghyusn.com/chain/collector/constant"
 	"org.donghyusn.com/chain/collector/utils"
@@ -30,7 +31,7 @@ type RPCError struct {
 }
 
 // Web3 Block Number
-func (result *Web3RpcResponse) GetBlockNumber(rpcUrl string) error {
+func GetBlockNumber(rpcUrl string) (*big.Int, error) {
 	constant := constant.MethodConstant
 
 	request := Web3RpcRequest{
@@ -43,7 +44,7 @@ func (result *Web3RpcResponse) GetBlockNumber(rpcUrl string) error {
 	res, postErr := utils.Post(rpcUrl, request)
 
 	if postErr != nil {
-		return postErr
+		return nil, postErr
 	}
 
 	var response Web3RpcResponse
@@ -52,13 +53,24 @@ func (result *Web3RpcResponse) GetBlockNumber(rpcUrl string) error {
 
 	if parseErr != nil {
 		log.Printf("[WEB3] Unmarshal Response Error: %v", parseErr)
-		return parseErr
+		return nil, parseErr
 	}
 
 	if response.Error != nil {
 		log.Printf("[WEB3] Node RPC Response: Code: %d, Message: %s", response.Error.Code, response.Error.Message)
-		return fmt.Errorf("%s", response.Error.Message)
+		return nil, fmt.Errorf("%s", response.Error.Message)
 	}
 
-	return nil
+	var blockNumberHex string
+	unmarshalErr := json.Unmarshal(response.Result, &blockNumberHex)
+
+	if unmarshalErr != nil {
+		log.Printf("[WEB3] Unmarshal Block Number Error: %v", unmarshalErr)
+		return nil, unmarshalErr
+	}
+
+	blockNumber := new(big.Int)
+	blockNumber.SetString(blockNumberHex[2:], 16) // Skip "0x" prefix
+
+	return blockNumber, nil
 }
