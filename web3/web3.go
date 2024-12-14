@@ -30,8 +30,59 @@ type RPCError struct {
 	Message string `json:"message"`
 }
 
+type Web3Instance struct {
+	RpcUrl string
+}
+
+func GetWeb3Instance(rpcUrl string) Web3Instance {
+	return Web3Instance{
+		RpcUrl: rpcUrl,
+	}
+}
+
+func (instance *Web3Instance) CreateAccount() (string, error) {
+	constant := constant.MethodConstant
+
+	request := Web3RpcRequest{
+		Jsonrpc: "2.0",
+		Method:  constant["ACCOUNT_CREATE"],
+		Params:  []interface{}{"password"},
+		ID:      1,
+	}
+
+	res, postErr := utils.Post(instance.RpcUrl, request)
+
+	if postErr != nil {
+		return "", postErr
+	}
+
+	var response Web3RpcResponse
+
+	parseErr := json.Unmarshal(res, &response)
+
+	if parseErr != nil {
+		log.Printf("[WEB3] Unmarshal Response Error: %v", parseErr)
+		return "", parseErr
+	}
+
+	if response.Error != nil {
+		log.Printf("[WEB3] Node RPC Response: Code: %d, Message: %s", response.Error.Code, response.Error.Message)
+		return "", fmt.Errorf("%s", response.Error.Message)
+	}
+
+	var account string
+
+	unmarshalErr := json.Unmarshal(res, &account)
+
+	if unmarshalErr != nil {
+		log.Printf("[WEB3] Unmarshal Account Error: %v", unmarshalErr)
+	}
+
+	return account, nil
+}
+
 // Web3 Block Number
-func GetBlockNumber(rpcUrl string) (*big.Int, error) {
+func (instance *Web3Instance) GetBlockNumber() (*big.Int, error) {
 	constant := constant.MethodConstant
 
 	request := Web3RpcRequest{
@@ -41,7 +92,7 @@ func GetBlockNumber(rpcUrl string) (*big.Int, error) {
 		ID:      1,
 	}
 
-	res, postErr := utils.Post(rpcUrl, request)
+	res, postErr := utils.Post(instance.RpcUrl, request)
 
 	if postErr != nil {
 		return nil, postErr
@@ -66,6 +117,51 @@ func GetBlockNumber(rpcUrl string) (*big.Int, error) {
 
 	if unmarshalErr != nil {
 		log.Printf("[WEB3] Unmarshal Block Number Error: %v", unmarshalErr)
+		return nil, unmarshalErr
+	}
+
+	blockNumber := new(big.Int)
+	blockNumber.SetString(blockNumberHex[2:], 16) // Skip "0x" prefix
+
+	return blockNumber, nil
+}
+
+// Check Balance
+func (instance *Web3Instance) GetBalance(address string) (*big.Int, error) {
+	constant := constant.MethodConstant
+
+	request := Web3RpcRequest{
+		Jsonrpc: "2.0",
+		Method:  constant["BALANCE"],
+		Params:  []interface{}{address, "latest"},
+		ID:      1,
+	}
+
+	res, postErr := utils.Post(instance.RpcUrl, request)
+
+	if postErr != nil {
+		return nil, postErr
+	}
+
+	var response Web3RpcResponse
+
+	parseErr := json.Unmarshal(res, &response)
+
+	if parseErr != nil {
+		log.Printf("[WEB3] Unmarshal Response Error: %v", parseErr)
+		return nil, parseErr
+	}
+
+	if response.Error != nil {
+		log.Printf("[WEB3] Node RPC Response: Code: %d, Message: %s", response.Error.Code, response.Error.Message)
+		return nil, fmt.Errorf("%s", response.Error.Message)
+	}
+
+	var blockNumberHex string
+	unmarshalErr := json.Unmarshal(response.Result, &blockNumberHex)
+
+	if unmarshalErr != nil {
+		log.Printf("[WEB3] Unmarshal Balance Error: %v", unmarshalErr)
 		return nil, unmarshalErr
 	}
 
