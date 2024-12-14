@@ -12,15 +12,33 @@ func CreateAccountExample() {
 }
 
 func LoadAccountExample() {
-	web3Instance := web3.GetWeb3Instance("example rpc url")
+	_, account, _ := web3.GetAccount("example account", "example_password")
 
 	// account, _ := web3.CreateAccount("example_password")
 
+	log.Printf("Account: %s", account)
+}
+
+func GetBalance() {
+	network, _ := web3.GetRpcUrlByNetworkName("example_network")
+
+	web3Instance := web3.GetWeb3Instance(network.NetworkUrl)
 	_, account, _ := web3.GetAccount("example account", "example_password")
 
 	balance, _ := web3Instance.GetBalance(account)
 
+	log.Printf("Account: %s, Balance: %d", account, balance)
+
+}
+
+func GetNonce() {
+	network, _ := web3.GetRpcUrlByNetworkName("example_network")
+
+	web3Instance := web3.GetWeb3Instance(network.NetworkUrl)
+	_, account, _ := web3.GetAccount("example account", "example_password")
+
 	nonce, _ := web3Instance.GetTxCount(account)
 
-	log.Printf("Account: %s, Balance: %d, Nonce: %d", account, balance, nonce)
+	log.Printf("Account: %s,  Nonce: %d", account, nonce)
+
 }
