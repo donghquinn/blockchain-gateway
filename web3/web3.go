@@ -40,45 +40,14 @@ func GetWeb3Instance(rpcUrl string) Web3Instance {
 	}
 }
 
-func (instance *Web3Instance) CreateAccount() (string, error) {
-	constant := constant.MethodConstant
+func (instance *Web3Instance) CreateAccount(password string) (string, error) {
+	address, createErr := utils.GenerateNewAccount(password, constant.PrivateKeyStoreDir)
 
-	request := Web3RpcRequest{
-		Jsonrpc: "2.0",
-		Method:  constant["ACCOUNT_CREATE"],
-		Params:  []interface{}{"password"},
-		ID:      1,
+	if createErr != nil {
+		return "", createErr
 	}
 
-	res, postErr := utils.Post(instance.RpcUrl, request)
-
-	if postErr != nil {
-		return "", postErr
-	}
-
-	var response Web3RpcResponse
-
-	parseErr := json.Unmarshal(res, &response)
-
-	if parseErr != nil {
-		log.Printf("[WEB3] Unmarshal Response Error: %v", parseErr)
-		return "", parseErr
-	}
-
-	if response.Error != nil {
-		log.Printf("[WEB3] Node RPC Response: Code: %d, Message: %s", response.Error.Code, response.Error.Message)
-		return "", fmt.Errorf("%s", response.Error.Message)
-	}
-
-	var account string
-
-	unmarshalErr := json.Unmarshal(res, &account)
-
-	if unmarshalErr != nil {
-		log.Printf("[WEB3] Unmarshal Account Error: %v", unmarshalErr)
-	}
-
-	return account, nil
+	return address, nil
 }
 
 // Web3 Block Number
