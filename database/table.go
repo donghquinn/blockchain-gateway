@@ -5,6 +5,7 @@ var CreateRpcUrlTable = `
 		network_seq			INTEGER										PRIMARY KEY AUTOINCREMENT,
 		network_name		TEXT										NOT NULL,
 		network_url			TEXT										NOT NULL,
+		network_type		TEXT CHECK(network_type IN ('WEB3'))		NOT NULL DEFAULT 'WEB3',
 		network_status		INTEGER										NOT NULL DEFAULT 1,
 		created_date		DATETIME									NOT NULL DEFAULT 	CURRENT_TIMESTAMP
 	)
