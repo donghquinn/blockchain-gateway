@@ -2,9 +2,23 @@ package example
 
 import (
 	"log"
+	"time"
 
 	"org.donghyusn.com/chain/collector/web3"
 )
+
+func Web3Example() {
+	CreateNetworkExample()
+
+	CreateAccountExample()
+
+	time.Sleep(time.Second * 3)
+
+	LoadAccountExample()
+
+	GetBalance()
+	GetNonce()
+}
 
 func CreateAccountExample() {
 	address, _ := web3.CreateAccount("example account", "example_password")
@@ -14,9 +28,11 @@ func CreateAccountExample() {
 func LoadAccountExample() {
 	_, account, _ := web3.GetAccount("example account", "example_password")
 
-	// account, _ := web3.CreateAccount("example_password")
-
 	log.Printf("Account: %s", account)
+}
+
+func CreateNetworkExample() {
+	web3.CreateNewNetwork("example_network", "https://example-network.com")
 }
 
 func GetBalance() {

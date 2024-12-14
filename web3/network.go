@@ -6,7 +6,7 @@ import (
 	"org.donghyusn.com/chain/collector/database"
 )
 
-func InsertRpcUrl(networkName string, rpcUrl string) error {
+func CreateNewNetwork(networkName string, rpcUrl string) error {
 	dbCon, dbErr := database.GetConnection()
 
 	if dbErr != nil {
@@ -60,7 +60,7 @@ func GetRpcUrlByNetworkName(networkName string) (NetworkListResult, error) {
 		return NetworkListResult{}, dbErr
 	}
 
-	result, queryErr := dbCon.SelectMultipleRows(SelectNetworkByNetworkNameQuery, networkName)
+	result, queryErr := dbCon.SelectOneRow(SelectNetworkByNetworkNameQuery, networkName)
 
 	if queryErr != nil {
 		return NetworkListResult{}, queryErr
