@@ -60,7 +60,7 @@ func GetRpcUrlByNetworkName(networkName string) (NetworkListResult, error) {
 		return NetworkListResult{}, dbErr
 	}
 
-	result, queryErr := dbCon.SelectOneRow(SelectNetworkByNetworkNameQuery, networkName)
+	result, queryErr := dbCon.SelectOneRow(SelectWeb3NetworkByNameQuery, networkName)
 
 	if queryErr != nil {
 		return NetworkListResult{}, queryErr

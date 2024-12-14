@@ -14,9 +14,10 @@ var SelectNetworkList = `
 	ORDER BY created_date DESC
 `
 
-var SelectNetworkByNetworkNameQuery = `
+var SelectWeb3NetworkByNameQuery = `
 	SELECT network_seq, network_name, network_url
 	FROM network_table
-	WHERE network_status = 1 AND
+	WHERE network_type = 'WEB3' AND
+		network_status = 1 AND
 		network_name = ?
 `
