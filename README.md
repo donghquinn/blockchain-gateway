@@ -1,5 +1,42 @@
 # Blockchain Client
 
+## Database
+
+* sqlite3
+    * save account, network, and other data
+
+## Used Dependencies
+
+* sqlite3
+    * manage data
+
+```bash
+    go get -u github.com/mattn/go-sqlite3
+```
+
+* go-ethereum
+    * create account and other utilization
+    * save keystore
+
+```bash
+    go get -u github.com/ethereum/go-ethereum
+    go get -u github.com/ethereum/go-ethereum/accounts/keystore
+```
+
+* bcrypt
+
+```bash
+    go get -u golang.org/x/crypto/bcrypt
+```
+
+* godotenv
+
+```bash
+    go get -u github.com/joho/godotenv
+```
+
+---
+
 ## Network
 * network name
     * network identification name
