@@ -13,29 +13,96 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"org.donghyusn.com/chain/collector/constant"
+	crypt "org.donghyusn.com/chain/collector/crypto"
 	"org.donghyusn.com/chain/collector/database"
 	"org.donghyusn.com/chain/collector/utils"
 )
 
 func CreateAccount(password string) (string, error) {
-	dbCon, dbErr := database.GetConnection()
+	encodedPassword, encodePasswordErr := crypt.EncryptHashPassword(password)
 
-	if dbErr != nil {
-		return "", dbErr
+	if encodePasswordErr != nil {
+		return "", encodePasswordErr
 	}
 
-	address, createErr := utils.GenerateNewAccount(password, constant.PrivateKeyStoreDir)
+	address, keystore, createErr := utils.GenerateNewAccount(password, constant.PrivateKeyStoreDir)
 
 	if createErr != nil {
 		return "", createErr
 	}
 
-	go dbCon.InsertQuery(InsertAccountQuery, address, password)
+	go func() {
+		accountSeq, err := insertAccount(address, encodedPassword)
+
+		if err != nil {
+			log.Printf("[CREATE ACCOUNT] Account insertion failed: %v", err)
+			return
+		}
+
+		keystorePath := fmt.Sprintf("%s/%s", constant.PrivateKeyStoreDir, keystore)
+		err = insertKeystore(fmt.Sprintf("%d", accountSeq), keystorePath)
+
+		if err != nil {
+			log.Printf("[CREATE ACCOUNT] Keystore insertion failed: %v", err)
+			return
+		}
+
+		log.Printf("[CREATE ACCOUNT] Keystore path inserted: %s", keystorePath)
+	}()
 
 	return address, nil
 }
 
-func GetAccount(keystorePath string, password string) (*ecdsa.PrivateKey, string, error) {
+func insertAccount(address string, encodedPassword string) (int64, error) {
+	dbCon, err := database.GetConnection()
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect to database: %v", err)
+	}
+
+	// Execute the insert query
+	accountSeq, err := dbCon.InsertQuery(InsertAccountQuery, address, encodedPassword)
+	if err != nil {
+		return 0, fmt.Errorf("failed to execute account insert query: %v", err)
+	}
+
+	return accountSeq, nil
+}
+
+func insertKeystore(accountSeq string, keystorePath string) error {
+	dbCon, err := database.GetConnection()
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %v", err)
+	}
+
+	// Execute the insert query
+	_, err = dbCon.InsertQuery(InsertKeyStore, accountSeq, keystorePath)
+	if err != nil {
+		return fmt.Errorf("failed to execute keystore insert query: %v", err)
+	}
+
+	return nil
+}
+
+func GetAccount(password string) (*ecdsa.PrivateKey, string, error) {
+	dbCon, dbErr := database.GetConnection()
+
+	if dbErr != nil {
+		return nil, "", dbErr
+	}
+
+	result, queryErr := dbCon.SelectOneRow(SelectAccountKeyStore, password)
+
+	if queryErr != nil {
+		return nil, "", queryErr
+	}
+
+	var keystorePath string
+
+	if scanErr := result.Scan(&keystorePath); scanErr != nil {
+		log.Printf("[WEB3] Scan Account Private Key Dir Error: %v", scanErr)
+		return nil, "", scanErr
+	}
+
 	privateKey, address, accountErr := LoadAccountFromKeystore(keystorePath, password)
 
 	if accountErr != nil {
