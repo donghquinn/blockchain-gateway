@@ -13,15 +13,24 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"org.donghyusn.com/chain/collector/constant"
+	"org.donghyusn.com/chain/collector/database"
 	"org.donghyusn.com/chain/collector/utils"
 )
 
 func CreateAccount(password string) (string, error) {
+	dbCon, dbErr := database.GetConnection()
+
+	if dbErr != nil {
+		return "", dbErr
+	}
+
 	address, createErr := utils.GenerateNewAccount(password, constant.PrivateKeyStoreDir)
 
 	if createErr != nil {
 		return "", createErr
 	}
+
+	go dbCon.InsertQuery(InsertAccountQuery, address, password)
 
 	return address, nil
 }
