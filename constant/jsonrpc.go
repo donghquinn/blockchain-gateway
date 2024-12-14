@@ -9,6 +9,8 @@ var MethodConstant = map[string]string{
 
 	// chain
 	"BLOCK_NUMBER": "eth_blockNumber",
-}
 
-var PrivateKeyStoreDir = "keystory/"
+	// Transaction
+	"SEND_TX":     "eth_sendTransaction",
+	"SEND_RAW_TX": "eth_sendRawTransaction",
+}
