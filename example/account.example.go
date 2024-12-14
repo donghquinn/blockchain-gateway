@@ -7,7 +7,7 @@ import (
 )
 
 func CreateAccountExample() {
-	address, _ := web3.CreateAccount("example_password")
+	address, _ := web3.CreateAccount("example account", "example_password")
 	log.Printf("Address: %s", address)
 }
 
@@ -16,7 +16,7 @@ func LoadAccountExample() {
 
 	// account, _ := web3.CreateAccount("example_password")
 
-	_, account, _ := web3.GetAccount("example_password")
+	_, account, _ := web3.GetAccount("example account", "example_password")
 
 	balance, _ := web3Instance.GetBalance(account)
 

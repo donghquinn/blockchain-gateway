@@ -11,7 +11,7 @@ type GlobalConfigStruct struct {
 	AesIv     string
 	AesKey    string
 	SecretKey string
-	JwtKey    string
+	// JwtKey    string
 }
 
 var GlobalConfig GlobalConfigStruct
@@ -21,6 +21,6 @@ func SetGlobalConfig() {
 	GlobalConfig.AppHost = fmt.Sprintf("%s:%s", os.Getenv("APP_HOST"), os.Getenv("APP_PORT"))
 	GlobalConfig.AesIv = os.Getenv("AES_IV")
 	GlobalConfig.AesKey = os.Getenv("AES_KEY")
-	GlobalConfig.JwtKey = os.Getenv("JWT_KEY")
+	// GlobalConfig.JwtKey = os.Getenv("JWT_KEY")
 	GlobalConfig.SecretKey = os.Getenv("SECRET_KEY")
 }

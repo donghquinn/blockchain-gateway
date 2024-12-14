@@ -2,9 +2,9 @@ package web3
 
 var InsertAccountQuery = `
 	INSERT INTO account_table
-		(account_address, account_password)
+		(account_address, account_name, account_password)
 	VALUES
-		(?, ?)
+		(?, ?, ?)
 `
 
 var InsertKeyStore = `
@@ -15,8 +15,8 @@ var InsertKeyStore = `
 `
 
 var SelectAccountKeyStore = `
-	SELECT pk.private_key_dir AS keystore
+	SELECT pk.private_key_dir AS keystore, a.account_password AS password
 	FROM private_key_table pk
 	LEFT JOIN account_table a ON a.account_seq = pk.account_seq
-	WHERE a.account_password = ?
+	WHERE a.account_name = ?
 `

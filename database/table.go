@@ -14,6 +14,7 @@ var CreateAccountTable = `
 	CREATE TABLE IF NOT EXISTS account_table (
 		account_seq			INTEGER 									PRIMARY KEY AUTOINCREMENT,
 		account_address 	TEXT										NOT NULL UNIQUE,
+		account_name		TEXT										NOT NULL UNIQUE,
 		account_password	TEXT										NOT NULL,
 		account_type 		TEXT CHECK(account_type IN ('WEB3'))		NOT NULL DEFAULT 'WEB3',
 		account_status		INTEGER										NOT NULL DEFAULT 1,
