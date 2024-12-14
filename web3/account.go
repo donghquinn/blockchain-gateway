@@ -13,30 +13,114 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"org.donghyusn.com/chain/collector/constant"
+	crypt "org.donghyusn.com/chain/collector/crypto"
 	"org.donghyusn.com/chain/collector/database"
 	"org.donghyusn.com/chain/collector/utils"
 )
 
-func CreateAccount(password string) (string, error) {
-	dbCon, dbErr := database.GetConnection()
+func CreateAccount(accountName string, password string) (string, error) {
+	encodedPassword, encodePasswordErr := crypt.EncryptHashPassword(password)
 
-	if dbErr != nil {
-		return "", dbErr
+	if encodePasswordErr != nil {
+		return "", encodePasswordErr
 	}
 
-	address, createErr := utils.GenerateNewAccount(password, constant.PrivateKeyStoreDir)
+	address, keystore, createErr := utils.GenerateNewAccount(password, constant.PrivateKeyStoreDir)
 
 	if createErr != nil {
 		return "", createErr
 	}
 
-	go dbCon.InsertQuery(InsertAccountQuery, address, password)
+	go insertAccountData(address, accountName, encodedPassword, keystore)
 
 	return address, nil
 }
 
-func GetAccount(keystorePath string, password string) (*ecdsa.PrivateKey, string, error) {
-	privateKey, address, accountErr := LoadAccountFromKeystore(keystorePath, password)
+func insertAccountData(address string, accountName string, encodedPassword string, keystore string) error {
+	accountSeq, insertErr := insertAccount(address, accountName, encodedPassword)
+
+	if insertErr != nil {
+		log.Printf("[CREATE ACCOUNT] Account insertion failed: %v", insertErr)
+		return insertErr
+	}
+
+	insertKeyErr := insertKeystore(fmt.Sprintf("%d", accountSeq), keystore)
+
+	if insertKeyErr != nil {
+		log.Printf("[CREATE ACCOUNT] Keystore insertion failed: %v", insertKeyErr)
+		return insertKeyErr
+	}
+
+	log.Printf("[CREATE ACCOUNT] Keystore path inserted: %s", keystore)
+
+	return nil
+}
+
+func insertAccount(address string, accountName string, encodedPassword string) (int64, error) {
+	dbCon, err := database.GetConnection()
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect to database: %v", err)
+	}
+
+	// Execute the insert query
+	accountSeq, err := dbCon.InsertQuery(InsertAccountQuery, address, accountName, encodedPassword)
+	if err != nil {
+		return 0, fmt.Errorf("failed to execute account insert query: %v", err)
+	}
+
+	return accountSeq, nil
+}
+
+func insertKeystore(accountSeq string, keystorePath string) error {
+	dbCon, err := database.GetConnection()
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %v", err)
+	}
+
+	// Execute the insert query
+	_, err = dbCon.InsertQuery(InsertKeyStore, accountSeq, keystorePath)
+	if err != nil {
+		return fmt.Errorf("failed to execute keystore insert query: %v", err)
+	}
+
+	return nil
+}
+
+// ================= GET ACCOUNT  =================
+// Get account and private key from database
+func GetAccount(accountName string, password string) (*ecdsa.PrivateKey, string, error) {
+	dbCon, dbErr := database.GetConnection()
+
+	if dbErr != nil {
+		return nil, "", dbErr
+	}
+
+	result, queryErr := dbCon.SelectOneRow(SelectAccountKeyStore, accountName)
+
+	if queryErr != nil {
+		return nil, "", queryErr
+	}
+
+	var queryResult AccountPrivateKeyDir
+
+	if scanErr := result.Scan(&queryResult.KeystoreDir, &queryResult.Password); scanErr != nil {
+		log.Printf("[WEB3] Scan Account Private Key Dir Error: %v", scanErr)
+		return nil, "", scanErr
+	}
+
+	isMatch, compareErr := crypt.PasswordCompare(queryResult.Password, password)
+
+	if compareErr != nil {
+		log.Printf("[WEB3] Password compare Error :%v", compareErr)
+		return nil, "", compareErr
+	}
+
+	if !isMatch {
+		log.Println("[WEB3] Password does not match")
+		return nil, "", fmt.Errorf("password does not match")
+	}
+
+	privateKey, address, accountErr := LoadAccountFromKeystore(queryResult.KeystoreDir, password)
 
 	if accountErr != nil {
 		return nil, "", accountErr
@@ -45,6 +129,7 @@ func GetAccount(keystorePath string, password string) (*ecdsa.PrivateKey, string
 	return privateKey, address, accountErr
 }
 
+// ================= PRIVATE KEY =================
 // Load Account from private key (hex)
 func LoadAccountFromPrivateKey(hexPrivateKey string) (*ecdsa.PrivateKey, common.Address, error) {
 	// Decode the private key from hex

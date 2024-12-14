@@ -44,6 +44,10 @@ func GetConnection() (DataBaseSqlite, error) {
 		return DataBaseSqlite{}, fmt.Errorf("failed to open database: %v", err)
 	}
 
+	if err := db.Ping(); err != nil {
+		return DataBaseSqlite{}, fmt.Errorf("failed to connect to database: %v", err)
+	}
+
 	dbInstance := DataBaseSqlite{db}
 
 	return dbInstance, nil
