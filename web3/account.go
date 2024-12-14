@@ -31,42 +31,29 @@ func CreateAccount(accountName string, password string) (string, error) {
 		return "", createErr
 	}
 
+	go insertAccountData(address, accountName, encodedPassword, keystore)
+
+	return address, nil
+}
+
+func insertAccountData(address string, accountName string, encodedPassword string, keystore string) error {
 	accountSeq, insertErr := insertAccount(address, accountName, encodedPassword)
 
 	if insertErr != nil {
 		log.Printf("[CREATE ACCOUNT] Account insertion failed: %v", insertErr)
-		return "", insertErr
+		return insertErr
 	}
 
 	insertKeyErr := insertKeystore(fmt.Sprintf("%d", accountSeq), keystore)
 
 	if insertKeyErr != nil {
 		log.Printf("[CREATE ACCOUNT] Keystore insertion failed: %v", insertKeyErr)
-		return "", insertKeyErr
+		return insertKeyErr
 	}
 
 	log.Printf("[CREATE ACCOUNT] Keystore path inserted: %s", keystore)
 
-	// go func() {
-	// 	accountSeq, err := insertAccount(address, encodedPassword)
-
-	// 	if err != nil {
-	// 		log.Printf("[CREATE ACCOUNT] Account insertion failed: %v", err)
-	// 		return
-	// 	}
-
-	// 	keystorePath := fmt.Sprintf("%s/%s", constant.PrivateKeyStoreDir, keystore)
-	// 	err = insertKeystore(fmt.Sprintf("%d", accountSeq), keystorePath)
-
-	// 	if err != nil {
-	// 		log.Printf("[CREATE ACCOUNT] Keystore insertion failed: %v", err)
-	// 		return
-	// 	}
-
-	// 	log.Printf("[CREATE ACCOUNT] Keystore path inserted: %s", keystorePath)
-	// }()
-
-	return address, nil
+	return nil
 }
 
 func insertAccount(address string, accountName string, encodedPassword string) (int64, error) {

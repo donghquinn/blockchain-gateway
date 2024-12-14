@@ -18,5 +18,6 @@ var SelectAccountKeyStore = `
 	SELECT pk.private_key_dir AS keystore, a.account_password AS password
 	FROM private_key_table pk
 	LEFT JOIN account_table a ON a.account_seq = pk.account_seq
-	WHERE a.account_name = ?
+	WHERE a.account_name = ? AND
+		a.account_type = 'WEB3'
 `
