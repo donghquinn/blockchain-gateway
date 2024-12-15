@@ -401,6 +401,11 @@ func UpdateRawTxStatus(txSeq int64, txStatus int) (int64, error) {
 	return txSeq, nil
 }
 
+// Cancel Nonce when failed
+func UpdateNonce() {
+	// TODO nonce cancel logic
+}
+
 func CreateRawTxData(transactionSeq int, address string, toAddress common.Address, value *big.Int, nonce *big.Int, gasLimit uint64, gasPrice *big.Int, chainID *big.Int) error {
 	dbCon, dbErr := database.GetConnection()
 
