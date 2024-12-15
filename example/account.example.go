@@ -38,7 +38,7 @@ func CreateNetworkExample() {
 func GetBalance() {
 	network, _ := web3.GetRpcUrlByNetworkName("example_network")
 
-	web3Instance := web3.GetWeb3Instance(network.NetworkUrl)
+	web3Instance := web3.GetWeb3Instance("example chain", network.NetworkUrl)
 	_, account, _ := web3.GetAccount("example account", "example_password")
 
 	balance, _ := web3Instance.GetBalance(account)
@@ -50,7 +50,7 @@ func GetBalance() {
 func GetNonce() {
 	network, _ := web3.GetRpcUrlByNetworkName("example_network")
 
-	web3Instance := web3.GetWeb3Instance(network.NetworkUrl)
+	web3Instance := web3.GetWeb3Instance("example chain", network.NetworkUrl)
 	_, account, _ := web3.GetAccount("example account", "example_password")
 
 	nonce, _ := web3Instance.GetTxCount(account)

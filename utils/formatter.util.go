@@ -1,16 +1,15 @@
 package utils
 
 import (
-	"fmt"
 	"math/big"
 )
 
-func BigIntToString(n *big.Int) string {
-	return fmt.Sprintf("%x", n) // or %x or upper case
+func BigIntToString(n *big.Int, format int) string {
+	return "0x" + n.Text(format)
 }
 
-func StringToBigInt(n string) *big.Int {
+func StringToBigInt(n string, format int) *big.Int {
 	formatter := new(big.Int)
-	formatter.SetString(n, 16)
+	formatter.SetString(n, format)
 	return formatter
 }

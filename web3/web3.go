@@ -33,7 +33,8 @@ type RPCError struct {
 }
 
 type Web3Instance struct {
-	RpcUrl string
+	ChainName string
+	RpcUrl    string
 }
 
 type TransactionParams struct {
@@ -45,9 +46,10 @@ type TransactionParams struct {
 	Input    string `json:"input"`
 }
 
-func GetWeb3Instance(rpcUrl string) Web3Instance {
+func GetWeb3Instance(chainName string, rpcUrl string) Web3Instance {
 	return Web3Instance{
-		RpcUrl: rpcUrl,
+		ChainName: chainName,
+		RpcUrl:    rpcUrl,
 	}
 }
 
@@ -196,7 +198,7 @@ func (instance *Web3Instance) GetTransactionCountInBlock(blockNumber *big.Int) (
 	request := Web3RpcRequest{
 		Jsonrpc: "2.0",
 		Method:  constant["BLOCK_TX_COUNT"],
-		Params:  []interface{}{utils.BigIntToString(blockNumber), "latest"},
+		Params:  []interface{}{utils.BigIntToString(blockNumber, 16)},
 		ID:      1,
 	}
 
@@ -229,7 +231,7 @@ func (instance *Web3Instance) GetTransactionCountInBlock(blockNumber *big.Int) (
 		return nil, unmarshalErr
 	}
 
-	bigInt := utils.StringToBigInt(blockTxResponse)
+	bigInt := utils.StringToBigInt(blockTxResponse, 16)
 
 	return bigInt, nil
 }

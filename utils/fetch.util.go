@@ -20,7 +20,7 @@ func Post(rpcUrl string, request interface{}) ([]byte, error) {
 	response, fetchErr := http.Post(rpcUrl, "application/json", bytes.NewBuffer(requestBody))
 
 	if fetchErr != nil {
-		log.Printf("[POST] Send Request Error: %v", marshalErr)
+		log.Printf("[POST] Send Request Error: %v", fetchErr)
 		return nil, fetchErr
 	}
 
@@ -29,7 +29,7 @@ func Post(rpcUrl string, request interface{}) ([]byte, error) {
 	body, readErr := io.ReadAll(response.Body)
 
 	if readErr != nil {
-		log.Printf("[POST] Read Response Body Error: %v", marshalErr)
+		log.Printf("[POST] Read Response Body Error: %v", readErr)
 		return nil, readErr
 	}
 
