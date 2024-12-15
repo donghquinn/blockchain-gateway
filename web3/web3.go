@@ -33,7 +33,8 @@ type RPCError struct {
 }
 
 type Web3Instance struct {
-	RpcUrl string
+	ChainName string
+	RpcUrl    string
 }
 
 type TransactionParams struct {
@@ -45,9 +46,10 @@ type TransactionParams struct {
 	Input    string `json:"input"`
 }
 
-func GetWeb3Instance(rpcUrl string) Web3Instance {
+func GetWeb3Instance(chainName string, rpcUrl string) Web3Instance {
 	return Web3Instance{
-		RpcUrl: rpcUrl,
+		ChainName: chainName,
+		RpcUrl:    rpcUrl,
 	}
 }
 
@@ -185,6 +187,53 @@ func (instance *Web3Instance) GetTxCount(address string) (*big.Int, error) {
 	blockNumber.SetString(txNonce[2:], 16) // Skip "0x" prefix
 
 	return blockNumber, nil
+}
+
+// ======================= CHAIN =======================
+// Get Transaction Number in a Block
+func (instance *Web3Instance) GetTransactionCountInBlock(blockNumber *big.Int) (*big.Int, error) {
+
+	constant := constant.MethodConstant
+
+	request := Web3RpcRequest{
+		Jsonrpc: "2.0",
+		Method:  constant["BLOCK_TX_COUNT"],
+		Params:  []interface{}{utils.BigIntToString(blockNumber, 16)},
+		ID:      1,
+	}
+
+	res, postErr := utils.Post(instance.RpcUrl, request)
+
+	if postErr != nil {
+		return nil, postErr
+	}
+
+	var response Web3RpcResponse
+
+	parseErr := json.Unmarshal(res, &response)
+
+	if parseErr != nil {
+		log.Printf("[WEB3] Unmarshal Transaction Count Response Error: %v", parseErr)
+		return nil, parseErr
+	}
+
+	if response.Error != nil {
+		log.Printf("[WEB3] Node RPC Response: Code: %d, Message: %s", response.Error.Code, response.Error.Message)
+		return nil, fmt.Errorf("%s", response.Error.Message)
+	}
+
+	var blockTxResponse string
+
+	unmarshalErr := json.Unmarshal(response.Result, &blockTxResponse)
+
+	if unmarshalErr != nil {
+		log.Printf("[WEB3] Unmarshal Nonce Error: %v", unmarshalErr)
+		return nil, unmarshalErr
+	}
+
+	bigInt := utils.StringToBigInt(blockTxResponse, 16)
+
+	return bigInt, nil
 }
 
 // ======================= TRANSACTION =======================

@@ -10,5 +10,6 @@ func main() {
 	godotenv.Load(".env")
 	database.InitializeDB()
 
-	example.Web3Example()
+	example.GetTransactionCount()
+	// example.Web3Example()
 }
