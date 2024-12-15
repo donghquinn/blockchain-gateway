@@ -196,7 +196,7 @@ func (instance *Web3Instance) GetTransactionCountInBlock(blockNumber *big.Int) (
 	request := Web3RpcRequest{
 		Jsonrpc: "2.0",
 		Method:  constant["BLOCK_TX_COUNT"],
-		Params:  []interface{}{utils.ToHexInt(blockNumber), "latest"},
+		Params:  []interface{}{utils.BigIntToString(blockNumber), "latest"},
 		ID:      1,
 	}
 
@@ -229,8 +229,7 @@ func (instance *Web3Instance) GetTransactionCountInBlock(blockNumber *big.Int) (
 		return nil, unmarshalErr
 	}
 
-	bigInt := new(big.Int)
-	bigInt.SetString(blockTxResponse, 16)
+	bigInt := utils.StringToBigInt(blockTxResponse)
 
 	return bigInt, nil
 }
