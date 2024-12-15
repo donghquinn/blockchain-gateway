@@ -187,6 +187,54 @@ func (instance *Web3Instance) GetTxCount(address string) (*big.Int, error) {
 	return blockNumber, nil
 }
 
+// ======================= CHAIN =======================
+// Get Transaction Number in a Block
+func (instance *Web3Instance) GetTransactionCountInBlock(blockNumber *big.Int) (*big.Int, error) {
+
+	constant := constant.MethodConstant
+
+	request := Web3RpcRequest{
+		Jsonrpc: "2.0",
+		Method:  constant["BLOCK_TX_COUNT"],
+		Params:  []interface{}{utils.ToHexInt(blockNumber), "latest"},
+		ID:      1,
+	}
+
+	res, postErr := utils.Post(instance.RpcUrl, request)
+
+	if postErr != nil {
+		return nil, postErr
+	}
+
+	var response Web3RpcResponse
+
+	parseErr := json.Unmarshal(res, &response)
+
+	if parseErr != nil {
+		log.Printf("[WEB3] Unmarshal Transaction Count Response Error: %v", parseErr)
+		return nil, parseErr
+	}
+
+	if response.Error != nil {
+		log.Printf("[WEB3] Node RPC Response: Code: %d, Message: %s", response.Error.Code, response.Error.Message)
+		return nil, fmt.Errorf("%s", response.Error.Message)
+	}
+
+	var blockTxResponse string
+
+	unmarshalErr := json.Unmarshal(response.Result, &blockTxResponse)
+
+	if unmarshalErr != nil {
+		log.Printf("[WEB3] Unmarshal Nonce Error: %v", unmarshalErr)
+		return nil, unmarshalErr
+	}
+
+	bigInt := new(big.Int)
+	bigInt.SetString(blockTxResponse, 16)
+
+	return bigInt, nil
+}
+
 // ======================= TRANSACTION =======================
 // Send Raw Tx
 func (instance *Web3Instance) SendRawTransaction(address string, privateKey *ecdsa.PrivateKey, toAddress common.Address, value *big.Int, gasLimit uint64, gasPrice *big.Int, chainID *big.Int) (string, error) {
