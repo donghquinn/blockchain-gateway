@@ -52,18 +52,33 @@ var CreateBalanceTable = `
 
 var CreateTransactionTable = `
 	CREATE TABLE IF NOT EXISTS transaction_table (
-		transaction_seq		INTEGER							PRIMARY KEY AUTOINCREMENT,
-		network_seq			INTEGER							NOT NULL REFERENCES network_table	(network_seq),
-		account_seq			INTEGER							NOT NULL REFERENCES account_table	(account_seq),
-		to_address			TEXT							NOT NULL,
-		transaction_type	TEXT CHECK(transaction_type IN ('RAW', 'CONTRACT'))	NOT NULL,
-		transaction_hash	TEXT								NULL,
-		created_date 		DATETIME 						NOT NULL DEFAULT 	CURRENT_TIMESTAMP
+		transaction_seq		INTEGER													PRIMARY KEY AUTOINCREMENT,
+		account_seq			INTEGER													NOT NULL REFERENCES account_table (account_seq),
+		network_seq			INTEGER													NOT NULL REFERENCES network_table (network_seq),
+		transaction_status  INTEGER													NOT NULL DEFAULT 0	COMMENT '0 - created, 1 - success, 2 - pending, 3 - failed',
+		transaction_type	TEXT CHECK(transaction_type IN ('RAW', 'CONTRACT'))		NOT NULL,
+		transaction_hash	TEXT														NULL,
+		created_date 		DATETIME 												NOT NULL DEFAULT 	CURRENT_TIMESTAMP
 	)
+`
+
+var CreateTransactionDataTable = `
+	CREATE TABLE IF NOT EXISTS transaction_data_table (
+		transaction_data_seq	INTEGER			PRIMARY KEY AUTOINCREMENT,
+		transaction_seq			INTEGER			NOT NULL REFERENCES transaction_table (transaction_seq),
+		from_address			TEXT			NOT NULL,
+		to_address				TEXT			NOT NULL,
+		value					INTEGER			NOT NULL,
+		nonce					INTEGER			NOT NULL,
+		gas_price				INTEGER			NOT NULL,
+		gas						INTEGER			NOT NULL,
+		chain_id				INTEGER			NOT NULL
+	)
+
 `
 
 var CreateTableTransactionQueue = []string{
 	CreateRpcUrlTable,
 	CreateAccountTable, CreatePrivateKeyTable, CreateBalanceTable, CreateNonceTable,
-	CreateTransactionTable,
+	CreateTransactionTable, CreateTransactionDataTable,
 }
