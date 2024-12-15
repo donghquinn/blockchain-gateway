@@ -55,7 +55,7 @@ var CreateTransactionTable = `
 		transaction_seq		INTEGER													PRIMARY KEY AUTOINCREMENT,
 		account_seq			INTEGER													NOT NULL REFERENCES account_table (account_seq),
 		network_seq			INTEGER													NOT NULL REFERENCES network_table (network_seq),
-		transaction_status  INTEGER													NOT NULL DEFAULT 0	COMMENT '0 - created, 1 - success, 2 - pending, 3 - failed',
+		transaction_status  INTEGER													NOT NULL DEFAULT 0,
 		transaction_type	TEXT CHECK(transaction_type IN ('RAW', 'CONTRACT'))		NOT NULL,
 		transaction_hash	TEXT														NULL,
 		created_date 		DATETIME 												NOT NULL DEFAULT 	CURRENT_TIMESTAMP
