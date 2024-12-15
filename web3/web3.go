@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"org.donghyusn.com/chain/collector/constant"
+	"org.donghyusn.com/chain/collector/database"
 	"org.donghyusn.com/chain/collector/utils"
 )
 
@@ -238,7 +239,7 @@ func (instance *Web3Instance) GetTransactionCountInBlock(blockNumber *big.Int) (
 
 // ======================= TRANSACTION =======================
 // Send Raw Tx
-func (instance *Web3Instance) SendRawTransaction(address string, privateKey *ecdsa.PrivateKey, toAddress common.Address, value *big.Int, gasLimit uint64, gasPrice *big.Int, chainID *big.Int) (string, error) {
+func (instance *Web3Instance) SendRawTransaction(networkName string, address string, privateKey *ecdsa.PrivateKey, toAddress common.Address, value *big.Int, gasLimit uint64, gasPrice *big.Int, chainID *big.Int) (string, error) {
 
 	nonce, nonceErr := instance.GetTxCount(address)
 
@@ -250,6 +251,12 @@ func (instance *Web3Instance) SendRawTransaction(address string, privateKey *ecd
 
 	if signErr != nil {
 		return "", signErr
+	}
+
+	txSeq, txErr := CreateRawTx(networkName, address)
+
+	if txErr != nil {
+		return "", txErr
 	}
 
 	constant := constant.MethodConstant
@@ -273,11 +280,13 @@ func (instance *Web3Instance) SendRawTransaction(address string, privateKey *ecd
 
 	if parseErr != nil {
 		log.Printf("[WEB3] Unmarshal Send Raw Transaction Response Error: %v", parseErr)
+		go UpdateRawTxStatus(txSeq, 3)
 		return "", parseErr
 	}
 
 	if response.Error != nil {
 		log.Printf("[WEB3] Node RPC Response: Code: %d, Message: %s", response.Error.Code, response.Error.Message)
+		go UpdateRawTxStatus(txSeq, 3)
 		return "", fmt.Errorf("%s", response.Error.Message)
 	}
 
@@ -287,8 +296,12 @@ func (instance *Web3Instance) SendRawTransaction(address string, privateKey *ecd
 
 	if unmarshalErr != nil {
 		log.Printf("[WEB3] Unmarshal Raw Tx Receipt Error: %v", unmarshalErr)
+		go UpdateRawTxStatus(txSeq, 3)
 		return "", unmarshalErr
 	}
+
+	// success
+	go UpdateRawTxStatus(txSeq, 1)
 
 	return transactionHash, nil
 }
@@ -349,3 +362,59 @@ func (instance *Web3Instance) SendRawTransaction(address string, privateKey *ecd
 
 // 	return transactionHash, nil
 // }
+
+// ================ METHOD ================
+func CreateRawTx(networkName string, address string) (int64, error) {
+	dbCon, dbErr := database.GetConnection()
+
+	if dbErr != nil {
+		log.Printf("[RAW_TX] Database Connection Error: %v", dbErr)
+		return -999, dbErr
+	}
+
+	txSeq, insertErr := dbCon.InsertQuery(InsertTransaction, networkName, address, "RAW")
+
+	if insertErr != nil {
+		log.Printf("[RAW_TX] Insert Raw Transaction Error: %v", dbErr)
+		return -999, insertErr
+	}
+
+	return txSeq, nil
+}
+
+// status 0 - created, 1 - success, 2 - pending, 3 - failed
+func UpdateRawTxStatus(txSeq int64, txStatus int) (int64, error) {
+	dbCon, dbErr := database.GetConnection()
+
+	if dbErr != nil {
+		log.Printf("[RAW_TX] Database Connection Error: %v", dbErr)
+		return -999, dbErr
+	}
+
+	txSeq, insertErr := dbCon.InsertQuery(UpdateTransactionStatus, fmt.Sprintf("%d", txSeq), fmt.Sprintf("%d", txStatus))
+
+	if insertErr != nil {
+		log.Printf("[RAW_TX] Update Raw Transaction Status Error: %v", dbErr)
+		return -999, insertErr
+	}
+
+	return txSeq, nil
+}
+
+func CreateRawTxData(transactionSeq int, address string, toAddress common.Address, value *big.Int, nonce *big.Int, gasLimit uint64, gasPrice *big.Int, chainID *big.Int) error {
+	dbCon, dbErr := database.GetConnection()
+
+	if dbErr != nil {
+		log.Printf("[RAW_TX] Database Connection Error: %v", dbErr)
+		return dbErr
+	}
+
+	_, insertErr := dbCon.InsertQuery(InsertTransactionData, fmt.Sprintf("%d", transactionSeq), address, toAddress.String(), value.String(), nonce.String(), gasPrice.String(), fmt.Sprintf("%d", gasLimit), chainID.String())
+
+	if insertErr != nil {
+		log.Printf("[RAW_TX] Insert Raw Transaction Data Error: %v", dbErr)
+		return insertErr
+	}
+
+	return nil
+}
