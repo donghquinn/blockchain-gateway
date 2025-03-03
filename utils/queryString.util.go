@@ -15,7 +15,7 @@ func GenerateQueryString(preparedStatement string, params ...string) (string, er
 	var queryBuilder strings.Builder
 	placeholderCount := strings.Count(preparedStatement, "?")
 	if placeholderCount != len(parmaList) {
-		return "", fmt.Errorf("플레이스홀더 수(%d)와 파라미터 수(%d)가 일치하지 않습니다", placeholderCount, len(parmaList))
+		return "", fmt.Errorf("number of placeholders(%d) and number of paremeters(%d) does not match", placeholderCount, len(parmaList))
 	}
 
 	paramIndex := 0
@@ -50,6 +50,6 @@ func formatParameter(param interface{}) (string, error) {
 	case int, int64, float64:
 		return fmt.Sprintf("%v", v), nil
 	default:
-		return "", fmt.Errorf("지원하지 않는 파라미터 타입: %T", param)
+		return "", fmt.Errorf("not support parameter type: %T", param)
 	}
 }
