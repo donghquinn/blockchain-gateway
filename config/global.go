@@ -11,6 +11,8 @@ type GlobalConfigStruct struct {
 	AesIv     string
 	AesKey    string
 	SecretKey string
+
+	RpcUrl string
 	// JwtKey    string
 }
 
@@ -23,4 +25,5 @@ func SetGlobalConfig() {
 	GlobalConfig.AesKey = os.Getenv("AES_KEY")
 	// GlobalConfig.JwtKey = os.Getenv("JWT_KEY")
 	GlobalConfig.SecretKey = os.Getenv("SECRET_KEY")
+	GlobalConfig.RpcUrl = os.Getenv("RPC_URL")
 }
